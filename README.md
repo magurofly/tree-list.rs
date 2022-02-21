@@ -25,4 +25,7 @@
 次の操作が O(N) で可能。
 
 - `self.iter() -> impl Iterator`: 要素の列挙
+
+次の操作が O(NlogN) で可能。
+
 - `TreeList::from_iter(into_iter)`: `IntoIterator` からの構築
