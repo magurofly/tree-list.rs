@@ -22,17 +22,11 @@ impl<T> Node<T> {
     }
 
     pub fn from_iter<I: IntoIterator<Item = T>>(data: I) -> Option<Pin<Box<Self>>> {
-        let mut nodes = data.into_iter().map(Node::pin).collect::<Vec<_>>();
-        if nodes.len() == 0 {
-            return None;
+        let mut node = None;
+        for element in data {
+            node = Node::merge(node, Some(Node::pin(element)));
         }
-        for i in (1..nodes.len()).rev() {
-            let mut node = nodes.pop().unwrap();
-            unsafe { node.as_mut().get_unchecked_mut() }.update();
-            let parent_mut = unsafe { nodes[(i - 1) / 2].as_mut().get_unchecked_mut() };
-            parent_mut.children[(i - 1) % 2] = Some(node);
-        }
-        nodes.pop()
+        node
     }
 
     pub fn pin(data: T) -> Pin<Box<Self>> {
@@ -156,7 +150,7 @@ impl<T> Node<T> {
             other
         });
         self_mut.update();
-        self
+        self.balance()
     }
 
     pub fn split_at(mut self: Pin<Box<Self>>, at: usize) -> (Option<Pin<Box<Self>>>, Option<Pin<Box<Self>>>) {
@@ -174,14 +168,14 @@ impl<T> Node<T> {
                     let (left, right) = self_mut.children[0].take().unwrap().split_at(at);
                     self_mut.children[0] = right;
                     self_mut.update();
-                    return (left, Some(self));
+                    return (left, Some(self.balance()));
                 }
             }
             let self_mut = unsafe { self.as_mut().get_unchecked_mut() };
             let (left, right) = self_mut.children[1].take().unwrap().split_at(at - left_len - 1);
             self_mut.children[1] = left;
             self_mut.update();
-            (Some(self), right)
+            (Some(self.balance()), right)
         }
     }
 }

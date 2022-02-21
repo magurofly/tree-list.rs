@@ -43,6 +43,7 @@ impl<T> TreeList<T> {
     /// # Complexity
     /// O(log(len))
     pub fn insert(&mut self, index: usize, element: T) {
+        assert!(index <= self.len());
         let node = Node::pin(element);
         if let Some(root) = self.root.take() {
             let (left, right) = root.split_at(index);
@@ -72,6 +73,7 @@ impl<T> TreeList<T> {
     /// # Complexity
     /// O(log(len))
     pub fn remove(&mut self, index: usize) -> Option<T> {
+        assert!(index < self.len());
         let (left, right) = self.root.take()?.split_at(index);
         if let Some(right) = right {
             let (node, right) = right.split_at(1);
@@ -183,7 +185,41 @@ impl<T: Debug> Debug for TreeList<T> {
 #[cfg(test)]
 mod tests {
     #[test]
-    fn it_works() {
-        assert_eq!(2 + 2, 4);
+    fn push() {
+        let mut list = super::TreeList::new();
+        for &x in &[6, 5, 4] {
+            list.push_front(x);
+        }
+        for &x in &[7, 8, 9] {
+            list.push_back(x);
+        }
+        for &x in &[3, 2, 1, 0] {
+            list.push_front(x);
+        }
+        let mut res = vec![];
+        for &x in list.iter() {
+            res.push(x);
+        }
+        assert_eq!(res.len(), 10);
+        for i in 0 .. 10 {
+            assert_eq!(res[i], i);
+        }
+    }
+
+    #[test]
+    fn insert() {
+        let mut list = super::TreeList::new();
+        list.insert(0, 4);
+        list.insert(0, 0);
+        list.insert(1, 1);
+        eprintln!("{:?}, len={}", list, list.len());
+        list.insert(3, 6);
+        list.insert(2, 2);
+        list.insert(4, 5);
+        list.insert(3, 3);
+        assert_eq!(list.len(), 7);
+        for (i, &x) in list.iter().enumerate() {
+            assert_eq!(i, x);
+        }
     }
 }
