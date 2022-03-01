@@ -119,12 +119,16 @@ impl<T> TreeList<T> {
     }
 
     pub fn leftmost<P: Fn(&T) -> bool>(&self, predicate: P) -> Option<usize> {
-        self.root.as_ref().and_then(|node| node.leftmost(predicate))
+        self.root.as_ref().and_then(|node| node.leftmost(|n| predicate(n.data())))
+    }
+
+    pub fn rightmost<P: Fn(&T) -> bool>(&self, predicate: P) -> Option<usize> {
+        self.root.as_ref().and_then(|node| node.rightmost(|n| predicate(n.data())))
     }
 
     pub fn insert_sorted(&mut self, x: T) where T: PartialOrd {
         if let Some(root) = self.root.take() {
-            let at = root.leftmost(|y| y >= &x).unwrap_or(root.len());
+            let at = root.leftmost(|y| y.data() >= &x).unwrap_or(root.len());
             let (left, right) = root.split_at(at);
             self.root = Node::merge(Node::merge(left, Some(Node::pin(x))), right);
         } else {
