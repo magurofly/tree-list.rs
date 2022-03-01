@@ -57,6 +57,24 @@ impl<T> Node<T> {
         }
     }
 
+    pub fn leftmost<P: Fn(&T) -> bool>(&self, predicate: P) -> Option<usize> {
+        let mut left_len = 0;
+        let result = predicate(&self.data);
+        if let Some(left) = &self.children[0] {
+            left_len = left.len();
+            if result {
+                return left.leftmost(predicate).or(Some(left_len));
+            }
+        }
+        if result {
+            return Some(left_len);
+        }
+        if let Some(right) = &self.children[1] {
+            return Some(left_len + 1 + right.leftmost(predicate)?);
+        }
+        None
+    }
+
     pub fn at(&self, index: usize) -> &Self {
         let mut left_len = 0;
         if let Some(left) = &self.children[0] {

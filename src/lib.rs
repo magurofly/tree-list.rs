@@ -118,30 +118,45 @@ impl<T> TreeList<T> {
         iter::Iter::new(self.root.as_ref().map(|node| node.as_ref().get_ref()))
     }
 
-    // pub fn splice<R, I>(&mut self, range: R, replace_with: I) -> Self
-    // where
-    //     R: RangeBounds<usize>,
-    //     I: IntoIterator<Item = T>,
-    // {
-    //     use Bound::*;
-    //     let l = match range.start_bound() {
-    //         Included(&n) => n + 1,
-    //         Excluded(&n) => n,
-    //         Unbounded => 0,
-    //     };
-    //     let r = match range.end_bound() {
-    //         Included(&n) => n + 1,
-    //         Excluded(&n) => n,
-    //         Unbounded => self.len(),
-    //     };
-    //     if let Some(root) = self.root.take() {
-    //         let (left, right) = root.split_at(l);
-    //         let (center, right) = right.split_at(r - l);
+    pub fn leftmost<P: Fn(&T) -> bool>(&self, predicate: P) -> Option<usize> {
+        self.root.as_ref().and_then(|node| node.leftmost(predicate))
+    }
 
-    //     } else {
-    //         Self::new()
-    //     }
-    // }
+    pub fn insert_sorted(&mut self, x: T) where T: PartialOrd {
+        if let Some(root) = self.root.take() {
+            let at = root.leftmost(|y| y >= &x).unwrap_or(root.len());
+            let (left, right) = root.split_at(at);
+            self.root = Node::merge(Node::merge(left, Some(Node::pin(x))), right);
+        } else {
+            self.root = Some(Node::pin(x));
+        }
+    }
+
+    pub fn splice<R, I>(&mut self, range: R, replace_with: I) -> Self
+    where
+        R: RangeBounds<usize>,
+        I: IntoIterator<Item = T>,
+    {
+        use Bound::*;
+        let l = match range.start_bound() {
+            Included(&n) => n,
+            Excluded(&n) => n.saturating_sub(1),
+            Unbounded => 0,
+        };
+        let r = match range.end_bound() {
+            Included(&n) => n + 1,
+            Excluded(&n) => n,
+            Unbounded => self.len(),
+        };
+        eprintln!("[{}, {})", l, r);
+        let mut center = self.split_off(l);
+        let mut right = center.split_off(r - l);
+        for x in replace_with {
+            self.push_back(x);
+        }
+        self.append(&mut right);
+        center
+    }
 }
 
 impl<T> FromIterator<T> for TreeList<T> {
