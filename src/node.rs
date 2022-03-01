@@ -57,6 +57,11 @@ impl<T> Node<T> {
         }
     }
 
+    pub fn replace_child(self: &mut Pin<Box<Self>>, dir: bool, replacement: Option<Pin<Box<Self>>>) -> Option<Pin<Box<Self>>> {
+        let self_mut = unsafe { self.as_mut().get_unchecked_mut() };
+        std::mem::replace(&mut self_mut.children[dir as usize], replacement)
+    }
+
     pub fn leftmost<P: Fn(&Self) -> bool>(&self, predicate: P) -> Option<usize> {
         let left_len = self.children[0].as_ref().map(|n| n.len()).unwrap_or(0);
         if predicate(&self) {

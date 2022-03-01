@@ -97,6 +97,17 @@ impl<T> TreeList<T> {
         Some(unsafe { Pin::into_inner_unchecked(right?) }.into_data())
     }
 
+    pub fn reverse(&mut self) {
+        fn dfs<T>(mut node: Pin<Box<Node<T>>>) -> Pin<Box<Node<T>>> {
+            let left = node.replace_child(false, None);
+            let right = node.replace_child(true, None);
+            node.replace_child(true, left.map(dfs));
+            node.replace_child(false, right.map(dfs));
+            node
+        }
+        self.root = self.root.take().map(dfs);
+    }
+
     /// Splits the list into two at the given index.
     /// Returns the second list.
     /// # Panics
