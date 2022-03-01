@@ -1,16 +1,17 @@
-use super::*;
+use super::node::*;
+use super::helper::*;
 
 pub struct Iter<'a, T> {
-    stack: Vec<&'a Node<T>>,
+    stack: Vec<&'a Node<ListHelper<T>>>,
 }
 impl<'a, T> Iter<'a, T> {
-    pub fn new(root: Option<&'a Node<T>>) -> Self {
+    pub fn new(root: Option<&'a Node<ListHelper<T>>>) -> Self {
         let mut this = Self { stack: vec![] };
         this.add(root);
         this
     }
 
-    fn add(&mut self, mut node: Option<&'a Node<T>>) {
+    fn add(&mut self, mut node: Option<&'a Node<ListHelper<T>>>) {
         while let Some(child) = node {
             self.stack.push(child);
             node = child.child(false);

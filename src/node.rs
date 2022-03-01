@@ -1,17 +1,19 @@
 use std::{pin::Pin};
 
-pub type PinnedNode<T> = Pin<Box<Node<T>>>;
+use super::helper::*;
 
-pub struct Node<T> {
-    data: T,
+pub type PinnedNode<H> = Pin<Box<Node<H>>>;
+
+pub struct Node<H: Helper> {
+    data: H::Data,
     len: usize,
     height: usize,
     // parent: Option<(bool, NonNull<Node<T>>)>,
-    children: [Option<PinnedNode<T>>; 2]
+    children: [Option<PinnedNode<H>>; 2]
 }
 
-impl<T> Node<T> {
-    pub fn new(data: T) -> Self {
+impl<H: Helper> Node<H> {
+    pub fn new(data: H::Data) -> Self {
         Node {
             data,
             len: 1,
@@ -21,7 +23,7 @@ impl<T> Node<T> {
         }
     }
 
-    pub fn from_iter<I: IntoIterator<Item = T>>(data: I) -> Option<Pin<Box<Self>>> {
+    pub fn from_iter<I: IntoIterator<Item = H::Data>>(data: I) -> Option<Pin<Box<Self>>> {
         let mut node = None;
         for element in data {
             node = Node::merge(node, Some(Node::pin(element)));
@@ -29,7 +31,7 @@ impl<T> Node<T> {
         node
     }
 
-    pub fn pin(data: T) -> Pin<Box<Self>> {
+    pub fn pin(data: H::Data) -> Pin<Box<Self>> {
         Box::pin(Self::new(data))
     }
 
@@ -37,19 +39,19 @@ impl<T> Node<T> {
         self.len
     }
 
-    pub fn data(&self) -> &T {
+    pub fn data(&self) -> &H::Data {
         &self.data
     }
 
-    pub fn data_mut(&mut self) -> &mut T {
+    pub fn data_mut(&mut self) -> &mut H::Data {
         &mut self.data
     }
 
-    pub fn into_data(self) -> T {
+    pub fn into_data(self) -> H::Data {
         self.data
     }
 
-    pub fn child(&self, dir: bool) -> Option<&Node<T>> {
+    pub fn child(&self, dir: bool) -> Option<&Node<H>> {
         if let Some(child) = &self.children[dir as usize] {
             Some(child.as_ref().get_ref())
         } else {
